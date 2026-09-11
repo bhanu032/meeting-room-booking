@@ -4,6 +4,7 @@ Tables are created and rooms are seeded on startup so the app
 is ready to use immediately after deployment.
 """
 
+import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,18 +13,23 @@ from app.models import Base
 from app.routers import rooms, bookings
 from app.seed import seed_rooms
 
+logger = logging.getLogger("uvicorn.error")
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup: create tables (idempotent) and seed rooms
-    Base.metadata.create_all(bind=engine)
-    db = SessionLocal()
+    # Startup: safely create tables and seed rooms
     try:
-        seed_rooms(db)
-    finally:
-        db.close()
+        Base.metadata.create_all(bind=engine)
+        db = SessionLocal()
+        try:
+            seed_rooms(db)
+            logger.info("Tables created and rooms verified successfully.")
+        finally:
+            db.close()
+    except Exception as exc:
+        logger.warning(f"Startup table/seed warning: {exc}")
     yield
-    # Shutdown: nothing to clean up for SQLite/PostgreSQL
 
 
 app = FastAPI(
@@ -36,7 +42,7 @@ app = FastAPI(
 # Allow requests from the Next.js frontend (both local dev and deployed)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Tighten to specific origins in production
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
