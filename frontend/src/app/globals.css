@@ -10,7 +10,7 @@
 @layer base {
   :root {
     color-scheme: light;              /* Force light native browser chrome always */
-    --bg-page:     #f1f5f9;   /* slate-100 — slightly warmer than 50 */
+    --bg-page:     #ffffff;   /* Pure white background */
     --bg-surface:  #ffffff;
     --bg-subtle:   #f8fafc;
     --border:      #e2e8f0;   /* slate-200 */
